@@ -105,6 +105,25 @@ where
 Bingen API
 ==========
 
+modifiers
+~~~~~~~~~
+
+This is a list of functions that will be applied to change the value
+of the element. It is passed to the constructor as a list::
+
+  (modifer1, (modifier2, arg1, arg2), (modifier3, arg1))
+
+modifier1 takes one parameter, the current value of the element.
+
+modifier2 takes two arguments which are the names of two other
+elements. It acts on the data from the first element to the last
+element, inclusive.
+
+modifier3, yagni?
+
+The modifiers are applied (when they are applied) in right-to-left
+order.
+
 =========
 Dev notes
 =========
@@ -115,7 +134,15 @@ are laid out like little-endian gcc bitfields.
 Elements that have modifier functions must have a length that matches
 a C integer type: char, short, long, long long.
 
-Groups must have a length that matches a C integer type.
+#No: Groups must have a length that matches a C integer type.
+
+An element (or group) may be converted to big-endian (via
+to_bigendian), but the element's size must be that of a C integer
+type. It is not required that the element also be aligned on an
+integer type boundary (that is, a 16-bit quantity can be converted to
+big-endian even though it is on an odd byte boundary).
+
+Maybe: Switch between big and little endian modes?
 
 Unless otherwise mentioned, the modifier functions that come with
 bingen operate on bytes. 
