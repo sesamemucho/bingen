@@ -4,8 +4,8 @@ Tests for `bingen` module.
 import pytest
 from bingen import bingen
 from bingen import element
-from bingen import exception
 from bingen import modifiers
+from bingen import bg_exc
 import BitVector
 
 class TestBingenBasic(object):
@@ -85,7 +85,7 @@ class TestBingenWithModifiers(object):
         pass
 
     def test_create_element_bigendian(self):
-        a = element.Int(16, 0xABCD, modifiers=(modifiers.to_bigendian,))
+        a = element.Int(16, 0xABCD, modifiers=(modifiers.ToBigEndian,))
 
         assert a.tohex() == 'CDAB'
         assert a.size() == 16

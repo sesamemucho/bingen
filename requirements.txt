@@ -1,1 +1,2 @@
 wheel>=0.22
+BitVector==3.3.2

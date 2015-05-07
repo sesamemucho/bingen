@@ -70,6 +70,55 @@ Group-elements can themselves be grouped::
 Reference
 =========
 
+Use cases
+=========
+
+HEY! PUT STORIES IN HERE!!!
+
+Three elements, no grouping
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(dot graph goes here, of     9:0x15A
+    4:0xF
+    3:6
+)
+
+At the end of the graph, everything can be evaluated immediately, so
+evaluation proceeds right to left (top to bottom in the displayed
+graph).
+
+Five elements, one group
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+(dot graph of
+{
+  3:2
+  3:6
+  Group1: {
+    9:0x15A
+    4:0xF
+    3:6
+  }
+}
+
+Group1 is the deepest compound item, so it is evaluated first. The top
+level is then evaluated right to left.
+
+Three elements, no grouping, one modifier
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(dot graph goes here, of    
+    16:0x1234 (with BigEndian modifier)
+    4:0xF
+    4:6
+)
+
+At the end of the graph, everything can be evaluated immediately, so
+evaluation proceeds right to left (top to bottom in the displayed
+graph).
+
+
+
 Bingen input file
 =================
 

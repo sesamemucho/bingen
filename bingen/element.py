@@ -1,68 +1,105 @@
+from __future__ import absolute_import
 
 import BitVector
 import itertools
-import struct
+# import struct
 
-from bingen import exception
+# from bingen import exception
+from bingen import bg_exc
+# import bg_exc
+
 
 class Element(object):
     _endian = 'little'
     """Base element for Bingen-bits
     """
-    def __init__(self, size, value, **kw)
+    def __init__(self, size, value, **kw):
         self._size = size
         self._value = value
         self._name = kw['name']
         # TODO: Do validation on this:
         self._modifiers = list()
-        for m in modifiers:
-            if isinstance(m, tuple) and (len(m) == 3):
-                No, it can''t be that easy. A modifier needs knowledge of when it
-                can be evaluated, and its dependencies. Make it an object.
-                self._modifiers.append((m[0], (m[1], m[2])))
-            elif callable(m):
-                self._modifiers.append((m, ()))
-            else:
-                raise bingen.InvalidType("Unrecognized modifier \"{}\"".format(m))
+        if 'modifiers' in kw:
+            for m in kw['modifiers']:
+                if isinstance(m, tuple) and (len(m) == 3):
+                    # TODO
+                    # No, it can''t be that easy. A modifier needs
+                    # knowledge of when it can be evaluated, and its
+                    # dependencies. Make it an object.
+                    self._modifiers.append((m[0], (m[1], m[2])))
+                elif callable(m):
+                    self._modifiers.append((m, ()))
+                else:
+                    raise bg_exc.InvalidType(
+                        "Unrecognized modifier \"{}\"".format(m))
+
+    def evaluate(self, value):
+        for mods in self._modifiers:
+            modifier = mods[0]()
+            value = modifier.evaluate(self._size, value)
+
+        return value
+
 
 class Int(Element):
     def __init__(self, size, value, name="", modifiers=()):
         super(Int, self).__init__(size, value, name=name, modifiers=modifiers)
 
-        self.bv = BitVector.BitVector(intVal=value, size=size)
-
     def tohex(self):
-        return "{:X}".format(self._value)
+        return "{:X}".format(self.evaluate(self._value))
 
     def tobv(self):
+        self.bv = BitVector.BitVector(
+            intVal=self.evaluate(self._value),
+            size=self._size)
         return self.bv
 
     def size(self):
         """Returns length of field in bits."""
         return self._size
 
+
 class Group(Element):
-    def __init__(self, *items):
-        super(Group, self).__init__()
+    _name_tmpl = 'Group{:04d}'
+    _name_index = 0
+
+    def __init__(self, *items, **kw):
         self.items = list()
+        self._size = 0
         self.add_all(items)
-#TODO: Calculate length and check, maybe raise InvalidSize
+        if 'name' in kw:
+            self._name = kw['name']
+        else:
+            Group._name_index += 1
+            self._name = Group._name_tmpl.format(Group._name_index)
+
+            # TODO: Calculate length and check, maybe raise InvalidSize
+        super(Group, self).__init__(self.size(), self.tohex(), name=self._name)
 
     def add_all(self, items):
         # We're doing little-endian, and BitVector does big-endian
         # TODO: Keep dictionary indexed by name (if present)
         for i in itertools.chain.from_iterable((reversed(items),)):
             print("Adding:", i.tohex())
-            self.add_item(i)
+            self._add_item(i)
+
+        self._recalculate_size()
 
     def add_item(self, i):
+        self._add_item(i)
+        self._recalculate_size()
+
+    def _add_item(self, i):
         self.items.append(i)
 
     def size(self):
+        return self._size
+
+    def _recalculate_size(self):
         s = 0
         for b in self.items:
             s += b.size()
-        return s
+        self._size = s
 
     def tobv(self):
         abv = BitVector.BitVector(size=0)
