@@ -2,6 +2,7 @@
 Tests for `bingen` module.
 """
 import pytest
+import re
 from bingen import bingen
 from bingen import element
 from bingen import modifiers
@@ -13,7 +14,6 @@ class TestBingenBasic(object):
     @classmethod
     def setup_class(cls):
         pass
-
     def test_something(self):
         assert element.Int(8, 3).tohex() == '3'
 
@@ -74,7 +74,7 @@ class TestBingenBasic(object):
     def teardown_class(cls):
         pass
 
-class TestBingenWithModifiers(object):
+class TestBingenWithBigEndianModifier(object):
 
     @classmethod
     def setup_class(cls):
@@ -90,3 +90,54 @@ class TestBingenWithModifiers(object):
         assert a.tohex() == 'CDAB'
         assert a.size() == 16
 
+    def test_element_wrong_size(self):
+        a = element.Int(17, 0xABCD, modifiers=(modifiers.ToBigEndian,))
+        with pytest.raises(bg_exc.InvalidSize):
+            a.tohex()
+
+    def test_create_group_bigendian(self):
+        a = element.Int(8, 0x45)
+        b = element.Int(8, 0x67)
+        g1 = element.Group(a, b, modifiers=(modifiers.ToBigEndian,))
+
+        assert g1.tohex() == '6745'
+        assert g1.size() == 16
+
+class TestBingenWithLabels(object):
+
+    @classmethod
+    def setup_class(cls):
+        pass
+
+    @classmethod
+    def teardown_class(cls):
+        pass
+
+    def test_create_elements_with_default_labels(self):
+        a = element.Int(8, 0x45)
+        b = element.Int(8, 0x67)
+
+        assert a.tohex() == '45'
+        assert a.size() == 8
+        assert re.search(r'^_Element(\d{4})', a.label())
+
+        assert b.tohex() == '67'
+        assert b.size() == 8
+        assert re.search(r'^_Element(\d{4})', b.label())
+
+    def test_create_element_with_label(self):
+        a = element.Int(8, 0x45, label="ElementA")
+
+        assert a.tohex() == '45'
+        assert a.size() == 8
+        assert a.label() == 'ElementA'
+
+    def test_length_between_elements(self):
+        a = element.Int(8, 0x45)
+        b = element.Int(8, 0x67)
+        c = element.Int(9, 0x45)
+        d = element.Int(11, 0x67)
+        
+        g1 = element.Group(a, b, c, d)
+
+        assert g1.length_between(a.label(), d.label()) == 25
